@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 
-branch = ENV.fetch('SOLIDUS_BRANCH', 'master')
+branch = ENV.fetch('SOLIDUS_BRANCH', 'v2.0')
 gem "solidus", github: "solidusio/solidus", branch: branch
 
 if branch == 'master' || branch >= "v2.0"

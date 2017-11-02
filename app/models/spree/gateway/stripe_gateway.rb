@@ -25,12 +25,12 @@ module Spree
 
     # Allow an environment variable to set the secret key
     def preferred_secret_key
-      ENV['STRIPE_SECRET_KEY']
+      ENV['STRIPE_SECRET_KEY'] || self[:preferences][:secret_key]
     end
 
     # Allow an environment variable to set the publishable key
     def preferred_publishable_key
-      ENV['STRIPE_PUBLIC_KEY']
+      ENV['STRIPE_PUBLIC_KEY'] || self[:preferences][:publishable_key]
     end
 
     # Base the server on the current environment
