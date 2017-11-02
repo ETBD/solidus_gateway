@@ -107,20 +107,41 @@ module Spree
     end
 
     def options_for_purchase_or_auth(money, creditcard, gateway_options)
-      options = {}
-      options[:description] = "Spree Order ID: #{gateway_options[:order_id]}"
-      options[:currency] = gateway_options[:currency]
+      options = payment_options(creditcard, gateway_options)
 
-      if customer = creditcard.gateway_customer_profile_id
-        options[:customer] = customer
-      end
-      if token_or_card_id = creditcard.gateway_payment_profile_id
-        # The Stripe ActiveMerchant gateway supports passing the token directly as the creditcard parameter
-        # The Stripe ActiveMerchant gateway supports passing the customer_id and credit_card id
-        # https://github.com/Shopify/active_merchant/issues/770
-        creditcard = token_or_card_id
-      end
-      return money, creditcard, options
+      # Take the neccessary customer and card components from the passed credit card, and return
+      # what the Stripe API is expecting.
+      customer_id = creditcard.gateway_customer_profile_id
+      options[:customer] = customer_id if customer_id
+
+      payment_id = creditcard.gateway_payment_profile_id
+      creditcard = payment_id if payment_id
+
+      [money, creditcard, options]
+    end
+
+
+    def payment_options(creditcard, gateway_options)
+      order_id = get_order_id(gateway_options)
+
+      {
+        description: description(gateway_options),
+        currency: gateway_options[:currency],
+        idempotency_key: Digest::MD5.hexdigest([order_id, creditcard].join),
+        metadata: {
+          'Purchase Order Number': "#{order_id}",
+          'IP Address': gateway_options[:ip]
+        }
+      }
+    end
+
+    def description(gateway_options = {})
+      return '' if gateway_options.empty?
+      "#{gateway_options[:billing_address][:name]} (Order ##{get_order_id(gateway_options)})"
+    end
+
+    def get_order_id(gateway_options)
+      gateway_options[:order_id].split('-')[0]
     end
 
     def address_for(payment)
