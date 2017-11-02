@@ -23,6 +23,26 @@ module Spree
       ActiveMerchant::Billing::StripeGateway
     end
 
+    # Allow an environment variable to set the secret key
+    def preferred_secret_key
+      ENV['STRIPE_SECRET_KEY']
+    end
+
+    # Allow an environment variable to set the publishable key
+    def preferred_publishable_key
+      ENV['STRIPE_PUBLIC_KEY']
+    end
+
+    # Base the server on the current environment
+    def preferred_server
+      Rails.env.production? ? 'production' : 'test'
+    end
+
+    # Base the test mode flag on the current environment
+    def preferred_test_mode
+      !Rails.env.production?
+    end
+
     def payment_profiles_supported?
       true
     end
