@@ -94,7 +94,7 @@ module Spree
         })
 
       else
-        payment.send(:gateway_error, response.message)
+        payment.send(:gateway_error, response)
       end
     end
 
