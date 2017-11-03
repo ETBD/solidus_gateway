@@ -74,8 +74,12 @@ module Spree
     def create_profile(payment)
       return unless payment.source.gateway_customer_profile_id.nil?
       options = {
-        email: payment.order.email,
+        description: payment.order.bill_address.full_name,
         login: preferred_secret_key,
+        metadata: {
+          'Email Address': payment.order.email,
+          'Purchase Order Number': payment.order.number
+        }
       }.merge! address_for(payment)
 
       source = update_source!(payment.source)
