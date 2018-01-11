@@ -74,11 +74,11 @@ module Spree
     def create_profile(payment)
       return unless payment.source.gateway_customer_profile_id.nil?
       options = {
-        description: payment.order.bill_address.full_name,
+        description: name_on_card(payment),
         login: preferred_secret_key,
         metadata: {
-          'Email Address': payment.order.email,
-          'Purchase Order Number': payment.order.number
+          'Email Address': payment.order.try(:email),
+          'Purchase Order Number': purchase_order_number(payment)
         }
       }.merge! address_for(payment)
 
@@ -104,6 +104,22 @@ module Spree
 
     private
 
+    def name_on_card(payment)
+      if payment.manual?
+        payment.source.name
+      else
+        payment.order.bill_address.full_name
+      end
+    end
+
+    def purchase_order_number(payment)
+      if payment.manual?
+        payment.reference_number
+      else
+        payment.order.number
+      end
+    end
+
     # In this gateway, what we call 'secret_key' is the 'login'
     def options
       options = super
@@ -126,6 +142,15 @@ module Spree
 
 
     def payment_options(creditcard, gateway_options)
+      # If there's an order attached to this payment. Otherwise, it's a manual payment.
+      if gateway_options.present?
+        standard_payment_options(creditcard, gateway_options)
+      else
+        manual_payment_options(creditcard)
+      end
+    end
+
+    def standard_payment_options(creditcard, gateway_options)
       order_id = get_order_id(gateway_options)
 
       {
@@ -133,14 +158,28 @@ module Spree
         currency: gateway_options[:currency],
         idempotency_key: Digest::MD5.hexdigest([order_id, creditcard].join),
         metadata: {
-          'Purchase Order Number': "#{order_id}",
+          'Purchase Order Number': order_id,
           'IP Address': gateway_options[:ip]
         }
       }
     end
 
-    def description(gateway_options = {})
-      return '' if gateway_options.empty?
+    def manual_payment_options(creditcard)
+      payment = creditcard.payments.first
+
+      {
+        description: "#{creditcard.name} (Manual Payment)",
+        currency: 'USD',
+        idempotency_key: Digest::MD5.hexdigest([creditcard].join),
+        metadata: {
+          'Purchase Order Number': payment.reference_number,
+          'Admin User': payment.user.try(:email)
+        }
+      }
+    end
+
+    def description(gateway_options)
+      return '' unless gateway_options
       "#{gateway_options[:billing_address][:name]} (Order ##{get_order_id(gateway_options)})"
     end
 
@@ -150,7 +189,12 @@ module Spree
 
     def address_for(payment)
       {}.tap do |options|
-        if address = payment.order.bill_address
+        if payment.manual?
+          options.merge!(address: {
+            address1: payment.address_line1,
+            zip: payment.postal_code
+          })
+        else address = payment.order.bill_address
           options.merge!(address: {
             address1: address.address1,
             address2: address.address2,
