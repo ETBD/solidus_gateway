@@ -75,11 +75,8 @@ module Spree
       return unless payment.source.gateway_customer_profile_id.nil?
       options = {
         description: name_on_card(payment),
-        login: preferred_secret_key,
-        metadata: {
-          'Email Address': payment.order.try(:email),
-          'Purchase Order Number': purchase_order_number(payment)
-        }
+        email: payment.try(:email),
+        login: preferred_secret_key
       }.merge! address_for(payment)
 
       source = update_source!(payment.source)
