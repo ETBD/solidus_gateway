@@ -23,8 +23,8 @@ Gem::Specification.new do |s|
   s.require_path = "lib"
   s.requirements << "none"
 
-  s.add_dependency "rails", [">= 5.0", "< 5.1"]
-  s.add_dependency "solidus_core", [">= 1.1", "< 2.1"]
+  s.add_dependency "rails", [">= 5.0", "< 5.3"]
+  s.add_dependency "solidus_core", [">= 1.1", "< 3"]
   s.add_dependency "solidus_support", ">= 0.1.3"
 
   # ActiveMerchant v1.58 through v1.59 introduced a breaking change
