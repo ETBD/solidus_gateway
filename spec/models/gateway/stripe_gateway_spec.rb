@@ -7,6 +7,7 @@ describe Spree::Gateway::StripeGateway do
 
   let(:payment) {
     double('Spree::Payment',
+      manual?: false,
       source: source,
       order: double('Spree::Order',
         email: email,
@@ -30,25 +31,27 @@ describe Spree::Gateway::StripeGateway do
   end
 
   describe '#create_profile' do
+    let(:bill_address) {
+      double('Spree::Address',
+        full_name: 'Roger Sanderson',
+        address1: '123 Happy Road',
+        address2: 'Apt 303',
+        city: 'Suzarac',
+        zipcode: '95671',
+        state: double('Spree::State', name: 'Oregon'),
+        country: double('Spree::Country', name: 'United States')
+      )
+    }
+
     before do
       allow(payment.source).to receive(:update_attributes!)
     end
 
     context 'with an order that has a bill address' do
-      let(:bill_address) {
-        double('Spree::Address',
-          address1: '123 Happy Road',
-          address2: 'Apt 303',
-          city: 'Suzarac',
-          zipcode: '95671',
-          state: double('Spree::State', name: 'Oregon'),
-          country: double('Spree::Country', name: 'United States')
-        )
-      }
-
       it 'stores the bill address with the provider' do
         expect(subject.provider).to receive(:store).with(payment.source, {
-          email: email,
+          description: 'Roger Sanderson',
+          email: nil,
           login: secret_key,
 
           address: {
@@ -56,8 +59,8 @@ describe Spree::Gateway::StripeGateway do
             address2: 'Apt 303',
             city: 'Suzarac',
             zip: '95671',
-            state: 'Oregon',
-            country: 'United States'
+            country: 'United States',
+            state: 'Oregon'
           }
         }).and_return double.as_null_object
 
@@ -65,48 +68,8 @@ describe Spree::Gateway::StripeGateway do
       end
     end
 
-    context 'with an order that does not have a bill address' do
-      let(:bill_address) { nil }
-
-      it 'does not store a bill address with the provider' do
-        expect(subject.provider).to receive(:store).with(payment.source, {
-          email: email,
-          login: secret_key,
-        }).and_return double.as_null_object
-
-        subject.create_profile payment
-      end
-
-      # Regression test for #141
-      context "correcting the card type" do
-        before do
-          # We don't care about this method for these tests
-          allow(subject.provider).to receive(:store).and_return(double.as_null_object)
-        end
-
-        it "converts 'American Express' to 'american_express'" do
-          payment.source.cc_type = 'American Express'
-          subject.create_profile(payment)
-          expect(payment.source.cc_type).to eq('american_express')
-        end
-
-        it "converts 'Diners Club' to 'diners_club'" do
-          payment.source.cc_type = 'Diners Club'
-          subject.create_profile(payment)
-          expect(payment.source.cc_type).to eq('diners_club')
-        end
-
-        it "converts 'Visa' to 'visa'" do
-          payment.source.cc_type = 'Visa'
-          subject.create_profile(payment)
-          expect(payment.source.cc_type).to eq('visa')
-        end
-      end
-    end
-
     context 'with a card represents payment_profile' do
       let(:source) { Spree::CreditCard.new(gateway_payment_profile_id: 'tok_profileid') }
-      let(:bill_address) { nil }
 
       it 'stores the profile_id as a card' do
         expect(subject.provider).to receive(:store).with(source.gateway_payment_profile_id, anything).and_return double.as_null_object
