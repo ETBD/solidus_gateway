@@ -12,7 +12,7 @@ need to manually add it to your rails app Gemfile.
 
 This extension is only ported over to Solidus to continue supporting stores upgrading from Spree.
 
-For **new stores we strongly recommend** using one of these payment provider extensions:
+For **new stores we strongly recommend** using one of these payment gateway extensions:
 
 * [`solidus_braintree_paypal`](https://github.com/solidusio/solidus_paypal_braintree) for Braintree provided payment methods like PayPal, Apple Pay and credit cards
 * [`solidus_adyen`](https://github.com/StemboltHQ/solidus-adyen) for Adyen provided payment methods
@@ -42,8 +42,8 @@ rails g solidus_gateway:install
 
 Finally, make sure to **restart your app**. Navigate to *Settings >
 Payments > Payment Methods* in the admin panel.  You should see a number of payment
-methods and the assigned provider for each.  Click on the payment method you wish
-to change the provider, and you should see a number of options under the provider dropdown.
+methods and the assigned gateway for each.  Click on the payment method you wish
+to change the gateway, and you should see a number of options under the gateway dropdown.
 
 Testing
 -------

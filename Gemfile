@@ -1,7 +1,7 @@
 source "https://rubygems.org"
 
-branch = ENV.fetch('SOLIDUS_BRANCH', 'v2.0')
-gem "solidus", github: "solidusio/solidus", branch: branch
+branch = ENV.fetch('SOLIDUS_BRANCH', 'v2.3')
+gem "solidus", '~> 2.3.0'
 
 if branch == 'master' || branch >= "v2.0"
   gem "rails-controller-testing", group: :test
@@ -24,6 +24,7 @@ gem 'chromedriver-helper' if ENV['CI']
 group :development, :test do
   gem "pry-rails"
   gem "ffaker"
+  gem "listen"
 end
 
 gemspec

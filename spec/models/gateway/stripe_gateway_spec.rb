@@ -16,8 +16,8 @@ describe Spree::Gateway::StripeGateway do
     )
   }
 
-  let(:provider) do
-    double('provider').tap do |p|
+  let(:gateway) do
+    double('gateway').tap do |p|
       allow(p).to receive(:purchase)
       allow(p).to receive(:authorize)
       allow(p).to receive(:capture)
@@ -27,7 +27,7 @@ describe Spree::Gateway::StripeGateway do
   before do
     subject.preferences = { secret_key: secret_key }
     allow(subject).to receive(:options_for_purchase_or_auth).and_return(['money','cc','opts'])
-    allow(subject).to receive(:provider).and_return provider
+    allow(subject).to receive(:gateway).and_return gateway
   end
 
   describe '#create_profile' do
@@ -48,8 +48,8 @@ describe Spree::Gateway::StripeGateway do
     end
 
     context 'with an order that has a bill address' do
-      it 'stores the bill address with the provider' do
-        expect(subject.provider).to receive(:store).with(payment.source, {
+      it 'stores the bill address with the gateway' do
+        expect(subject.gateway).to receive(:store).with(payment.source, {
           description: 'Roger Sanderson',
           email: nil,
           login: secret_key,
@@ -72,7 +72,7 @@ describe Spree::Gateway::StripeGateway do
       let(:source) { Spree::CreditCard.new(gateway_payment_profile_id: 'tok_profileid') }
 
       it 'stores the profile_id as a card' do
-        expect(subject.provider).to receive(:store).with(source.gateway_payment_profile_id, anything).and_return double.as_null_object
+        expect(subject.gateway).to receive(:store).with(source.gateway_payment_profile_id, anything).and_return double.as_null_object
 
         subject.create_profile payment
       end
@@ -84,8 +84,8 @@ describe Spree::Gateway::StripeGateway do
       subject.purchase(19.99, 'credit card', {})
     end
 
-    it 'send the payment to the provider' do
-      expect(provider).to receive(:purchase).with('money','cc','opts')
+    it 'send the payment to the gateway' do
+      expect(gateway).to receive(:purchase).with('money','cc','opts')
     end
   end
 
@@ -94,8 +94,8 @@ describe Spree::Gateway::StripeGateway do
       subject.authorize(19.99, 'credit card', {})
     end
 
-    it 'send the authorization to the provider' do
-      expect(provider).to receive(:authorize).with('money','cc','opts')
+    it 'send the authorization to the gateway' do
+      expect(gateway).to receive(:authorize).with('money','cc','opts')
     end
   end
 
@@ -106,11 +106,11 @@ describe Spree::Gateway::StripeGateway do
     end
 
     it 'convert the amount to cents' do
-      expect(provider).to receive(:capture).with(1234,anything,anything)
+      expect(gateway).to receive(:capture).with(1234,anything,anything)
     end
 
     it 'use the response code as the authorization' do
-      expect(provider).to receive(:capture).with(anything,'response_code',anything)
+      expect(gateway).to receive(:capture).with(anything,'response_code',anything)
     end
   end
 
@@ -119,7 +119,7 @@ describe Spree::Gateway::StripeGateway do
       gateway = described_class.new(:active => true)
       gateway.set_preference :secret_key, secret_key
       allow(gateway).to receive(:options_for_purchase_or_auth).and_return(['money','cc','opts'])
-      allow(gateway).to receive(:provider).and_return provider
+      allow(gateway).to receive(:gateway).and_return gateway
       allow(gateway).to receive_messages :source_required => true
       gateway
     end
@@ -128,7 +128,7 @@ describe Spree::Gateway::StripeGateway do
     let(:order) { Spree::Order.create! }
 
     let(:card) do
-      FactoryBot.create(
+      FactoryBot.build_stubbed(
         :credit_card,
         gateway_customer_profile_id: 'cus_abcde',
         imported: false
@@ -158,7 +158,7 @@ describe Spree::Gateway::StripeGateway do
     end
 
     it 'gets correct amount' do
-      expect(provider).to receive(:capture).with(9855,'12345',anything).and_return(success_response)
+      expect(gateway).to receive(:capture).with(9855,'12345',anything).and_return(success_response)
     end
   end
 end
