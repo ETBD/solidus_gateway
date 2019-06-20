@@ -156,7 +156,8 @@ module Spree
         idempotency_key: Digest::MD5.hexdigest([order_id, creditcard].join),
         metadata: {
           'Purchase Order Number': order_id,
-          'IP Address': gateway_options[:ip]
+          'IP Address': gateway_options[:ip],
+          'merch_order': true
         }
       }
     end
@@ -170,7 +171,8 @@ module Spree
         idempotency_key: Digest::MD5.hexdigest([creditcard].join),
         metadata: {
           'Purchase Order Number': payment.reference_number,
-          'Admin User': payment.user.try(:email)
+          'Admin User': payment.user.try(:email),
+          'merch_order': true
         }
       }
     end
